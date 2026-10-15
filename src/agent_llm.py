@@ -41,11 +41,12 @@ def run(seed, model, api_base, max_steps=8):
                                         f"Monto del siniestro: {siniestro} MXN."}]
     steps = []
 
-    def add(name, args, out, err, fault, lat, tin, tout):
+    def add(name, args, out, err, fault, lat, tin, tout, served):
         steps.append({"step": len(steps) + 1, "tool": name, "args": args,
                       "status": "error" if err else "ok", "error_type": err,
                       "retries": 0, "fault_injected": fault, "out": out,
-                      "latency_ms": lat, "tokens_in": tin, "tokens_out": tout})
+                      "latency_ms": lat, "tokens_in": tin, "tokens_out": tout,
+                      "model_served": served})   # modelo que respondió (un router puede variar)
 
     for _ in range(max_steps):
         t0 = time.time()
@@ -57,7 +58,7 @@ def run(seed, model, api_base, max_steps=8):
         if not msg.tool_calls:
             texto = (msg.content or "").lower()
             add("respuesta_final", {"tipo": "rechazo" if "rechazo" in texto else "final"},
-                {}, None, None, lat, tin, tout)
+                {}, None, None, lat, tin, tout, resp.model)
             return steps
         msgs.append({"role": "assistant", "content": msg.content or "", "tool_calls": [
             {"id": tc.id, "type": "function",
@@ -72,7 +73,7 @@ def run(seed, model, api_base, max_steps=8):
             out, err = call_tool(tc.function.name, args, fault)
             first = k == 0   # tokens y latencia se atribuyen a la primera llamada del turno
             add(tc.function.name, args, out, err, fault,
-                lat if first else 0, tin if first else 0, tout if first else 0)
+                lat if first else 0, tin if first else 0, tout if first else 0, resp.model)
             msgs.append({"role": "tool", "tool_call_id": tc.id,
                          "content": json.dumps(out, ensure_ascii=False)})
     return steps   # sin respuesta final tras max_steps
