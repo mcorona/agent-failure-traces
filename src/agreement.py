@@ -1,7 +1,8 @@
 """Acuerdo entre etiquetas automáticas (label.py) y revisión humana (review.py).
 Uso: python3 src/agreement.py traces/review_omni_20.csv
 Una fila cuenta como revisada si outcome_humano no está vacío. En failure_mode_humano,
-vacío / 'ninguno' / 'none' / '-' = sin falla; si es_F7 es verdadero y no hay modo, es F7."""
+vacío / 'ninguno' / 'none' / '-' = sin evento de herramienta; si es_F7 es verdadero y no hay
+modo, es F7. Los modos F1–F6 son eventos, independientes del resultado (docs/taxonomy.md v0.1)."""
 import collections, csv, sys
 
 NINGUNO = {"", "ninguno", "none", "-", "null"}

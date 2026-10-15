@@ -1,5 +1,5 @@
-# Taxonomía de fallas v0 (codebook)
-Versión: v0 · Fecha: 2026-10-15 · Complementa docs/design.md (preregistro congelado en prereg-v0)
+# Taxonomía de fallas v0.1 (codebook)
+Versión: v0.1 · Fecha: 2026-10-14 · Complementa docs/design.md (preregistro congelado en prereg-v0). Cambios respecto a v0 al final.
 
 ## Modos de falla
 | ID | Modo | Definición operativa | Regla de detección en la traza | Relación con MAST |
@@ -13,11 +13,16 @@ Versión: v0 · Fecha: 2026-10-15 · Complementa docs/design.md (preregistro con
 | F7 | razonamiento_erroneo | Llamada válida con argumentos incorrectos (póliza, monto) | solo por etiqueta humana | Fuera de MAST (requiere revisión humana) |
 
 ## Reglas de etiquetado
-- Un modo principal por corrida: el del primer paso fallido (first_failing_step).
-- Si hay varios modos, gana el primero en el tiempo.
-- Sin falla: outcome = "ok" y failure_mode = null.
+- failure_mode etiqueta el **evento de herramienta**: el modo del primer paso fallido (first_failing_step), independiente del resultado final de la corrida.
+- El resultado de la corrida se registra aparte en `outcome` (ok/fail). Una corrida puede tener failure_mode y outcome = "ok" (la falla se recuperó o no afectó el resultado).
+- Un modo principal por corrida. Si hay varios modos, gana el primero en el tiempo.
+- Sin evento de herramienta: failure_mode = null.
 - Las reglas F1–F6 se aplican automáticamente; F7 requiere revisión humana.
+- Revisión humana: failure_mode_humano es el modo del primer evento aunque la corrida termine ok; "ninguno" (o "-") solo si no hubo ningún evento. El resultado final se juzga aparte en outcome_humano.
 
 ## Limitaciones
 - MAST describe sistemas multi-agente; este dataset es de agente único. El mapeo es aproximado.
 - v0 no tiene acuerdo entre anotadores. En v1 se etiquetan 100 corridas por dos personas y se reporta kappa de Cohen.
+
+## Cambios
+- **v0.1 (2026-10-14)**: se aclara que F1–F6 son eventos de herramienta, independientes del resultado final. v0 decía "Sin falla: outcome = ok y failure_mode = null", lo que contradecía a `label.py`, que asigna F1/F2 aunque la corrida termine ok. Lo detectó la revisión humana de `traces/review_omni_20.csv`: 4 de los 6 desacuerdos de modo. `label.py` no cambia. Esa revisión se hizo con la lectura de v0 (ok implicaba "ninguno"); después el revisor actualizó esas 4 celdas (r00000, r00007, r00015, r00002) a F1/F1/F1/F2 bajo v0.1, con una nota en la hoja que conserva el valor anterior ("-"). Las dos celdas que estaban en blanco (r00006, r00004) las aclaró el revisor como F2. El acuerdo de modo de falla se reporta de ambas formas: 80 % con la revisión original (v0) y 100 % tras la actualización (v0.1). Este último es acuerdo fácil: F1 y F2 se leen del error_type de la traza y la muestra no contiene F3–F7.
